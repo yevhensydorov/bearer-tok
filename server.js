@@ -12,6 +12,7 @@ const flash = require("connect-flash");
 
 const configDB = require("./config/database.js");
 mongoose.connect(configDB.url);
+require("./config/passport")(passport);
 
 app.use(morgan("dev"));
 app.use(cookieParser());

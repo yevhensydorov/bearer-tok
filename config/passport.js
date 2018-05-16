@@ -7,7 +7,7 @@ module.exports = passport => {
     done(null, user.id);
   });
 
-  passport.deserialize((id, done) => {
+  passport.deserializeUser((id, done) => {
     User.findById(id, (err, user) => {
       done(err, user);
     });
@@ -23,12 +23,24 @@ module.exports = passport => {
       },
       (req, email, password, done) => {
         process.nextTick(() => {
-          User.findOne({ "local.email": email }, (err, user) => {
+          User.findOne({ "local.username": email }, (err, user) => {
             if (err) {
               return done(err);
             } else if (user) {
               return done(null, false, {
                 message: "That email is already taken!"
+              });
+            } else {
+              let newUser = new User();
+              newUser.local.username = email;
+              newUser.local.password = password;
+
+              newUser.save(err => {
+                if (err) {
+                  throw err;
+                } else {
+                  return done(null, newUser);
+                }
               });
             }
           });

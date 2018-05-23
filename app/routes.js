@@ -5,6 +5,19 @@ module.exports = app => {
     res.render("index");
   });
 
+  app.get("/login", (req, res) => {
+    res.render("login", { message: req.flash("error") });
+  });
+
+  app.post(
+    "/login",
+    passport.authenticate("local-login", {
+      successRedirect: "/profile",
+      failureRedirect: "login",
+      failureFlash: true
+    })
+  );
+
   app.get("/signup", (req, res) => {
     res.render("signup", { message: req.flash("error") });
   });
@@ -18,15 +31,30 @@ module.exports = app => {
     })
   );
 
-  app.get("/:username/:password", (req, res) => {
-    const newUser = new User();
-    newUser.local.username = req.params.username;
-    newUser.local.password = req.params.password;
-    // console.log(newUser.local.username);
-    // console.log(newUser.local.password);
-    newUser.save(err => {
-      if (err) throw err;
-    });
-    res.send("Success!");
+  app.get("/profile", isLoggedIn, (req, res) => {
+    res.render("profile", { user: req.user });
   });
+
+  app.get("/auth/facebook", passport.authenticate("facebook"));
+
+  app.get(
+    "/auth/facebook/callback",
+    passport.authenticate("facebook", { failureRedirect: "/" }),
+    (req, res) => {
+      // Successful authentication, redirect home.
+      res.redirect("/profile");
+    }
+  );
+
+  app.get("/logout", (req, res) => {
+    req.logout();
+    res.redirect("/");
+  });
+};
+
+const isLoggedIn = (req, res, next) => {
+  if (req.isAuthenticated()) {
+    return next();
+  }
+  res.redirect("/login");
 };

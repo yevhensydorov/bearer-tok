@@ -38,20 +38,13 @@ app.use(flash());
 
 app.set("view engine", "ejs");
 
-// app.get("/", (req, res) => {
-//   res.send("Test");
-//   console.log(req.cookies);
-//   console.log("+++++++++++++++");
-//   console.log(req.session);
-// });
-
 require("./app/routes")(app, passport);
 
 const httpsOptions = {
-  key: fs.readFileSync("./security/cert.key"),
-  cert: fs.readFileSync("./security/cert.pem")
+  key: fs.readFileSync("./security/privatekey.key"),
+  cert: fs.readFileSync("./security/certificate.crt")
 };
 
-app.listen(SERVER_PORT, () => {
-  console.info(`Server started at http://localhost:${SERVER_PORT}`);
+const server = https.createServer(httpsOptions, app).listen(SERVER_PORT, () => {
+  console.info(`Server started at https://localhost:${SERVER_PORT}`);
 });

@@ -1,10 +1,8 @@
 const express = require("express");
 const app = express();
-const https = require("https");
 
 const SERVER_PORT = process.env.PORT || 3003;
 
-const fs = require("fs");
 const cookieParser = require("cookie-parser");
 const session = require("express-session");
 const morgan = require("morgan");
@@ -40,11 +38,6 @@ app.set("view engine", "ejs");
 
 require("./app/routes")(app, passport);
 
-const httpsOptions = {
-  key: fs.readFileSync("./security/privatekey.key"),
-  cert: fs.readFileSync("./security/certificate.crt")
-};
-
-const server = https.createServer(httpsOptions, app).listen(SERVER_PORT, () => {
-  console.info(`Server started at https://localhost:${SERVER_PORT}`);
+app.listen(SERVER_PORT, () => {
+  console.info(`Server started at http://localhost:${SERVER_PORT}`);
 });

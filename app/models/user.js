@@ -9,8 +9,14 @@ const userSchema = mongoose.Schema({
   facebook: {
     id: String,
     token: String,
-    email: String,
-    name: String
+    name: String,
+    email: String
+  },
+  google: {
+    id: String,
+    token: String,
+    name: String,
+    email: String
   }
 });
 

@@ -1,5 +1,6 @@
 const LocalStrategy = require("passport-local").Strategy;
 const FacebookStrategy = require("passport-facebook").Strategy;
+const GoogleStrategy = require("passport-google-oauth20").Strategy;
 
 const User = require("../app/models/user");
 const configAuth = require("./auth");
@@ -79,11 +80,15 @@ module.exports = passport => {
       {
         clientID: configAuth.facebookAuth.clientId,
         clientSecret: configAuth.facebookAuth.clientSecret,
-        callbackURL: configAuth.facebookAuth.callbackUrl
+        callbackURL: configAuth.facebookAuth.callbackUrl,
+        profileURL: "https://graph.facebook.com/v3.0/me",
+        authorizationURL: "https://www.facebook.com/v3.0/dialog/oauth",
+        tokenURL: "https://graph.facebook.com/v3.0/oauth/access_token",
+        profileFields: ["email", "first_name", "last_name", "gender", "link"]
       },
       (accessToken, refreshToken, profile, cb) => {
         process.nextTick(() => {
-          User.findOrCreate({ facebookId: profile.id }, (err, user) => {
+          User.findOne({ facebookId: profile.id }, (err, user) => {
             if (err) {
               return cb(err);
             } else if (user) {
@@ -91,9 +96,53 @@ module.exports = passport => {
             } else {
               let newUser = new User();
               newUser.facebook.id = profile.id;
-              newUser.token = accessToken;
-              newUser.facebook.email = profile.emails;
-              console.log(newUser);
+              newUser.facebook.token = accessToken;
+              newUser.facebook.name = `${profile.name.givenName} ${
+                profile.name.familyName
+              }`;
+              newUser.facebook.email = profile.emails[0].value;
+              // console.log("here is user console log", newUser);
+              newUser.save(err => {
+                if (err) {
+                  throw err;
+                } else {
+                  return cb(null, newUser);
+                }
+              });
+            }
+          });
+        });
+      }
+    )
+  );
+
+  passport.use(
+    new GoogleStrategy(
+      {
+        clientID: configAuth.googleAuth.clientId,
+        clientSecret: configAuth.googleAuth.clientSecret,
+        callbackURL: configAuth.googleAuth.callbackUrl
+      },
+      (accessToken, refreshToken, profile, cb) => {
+        process.nextTick(() => {
+          User.findOne({ googleId: profile.id }, (err, user) => {
+            if (err) {
+              return cb(err);
+            } else if (user) {
+              return cb(null, user);
+            } else {
+              let newUser = new User();
+              newUser.google.id = profile.id;
+              newUser.google.token = accessToken;
+              newUser.google.name = profile.displayName;
+              newUser.google.email = profile.emails[0].value;
+              newUser.save(err => {
+                if (err) {
+                  throw err;
+                } else {
+                  return cb(null, newUser);
+                }
+              });
             }
           });
         });

@@ -33,7 +33,7 @@ module.exports = passport => {
               return done(null, false, {
                 message: "That email is already taken!"
               });
-            } else {
+            } else if (!req.user) {
               let newUser = new User();
               newUser.local.username = email;
               newUser.local.password = newUser.generateHash(password);
@@ -43,6 +43,18 @@ module.exports = passport => {
                   throw err;
                 } else {
                   return done(null, newUser);
+                }
+              });
+            } else {
+              let user = req.user;
+              user.local.username = email;
+              user.local.password = user.generateHash(password);
+
+              user.save(err => {
+                if (err) {
+                  throw err;
+                } else {
+                  return done(null, user);
                 }
               });
             }
@@ -84,33 +96,53 @@ module.exports = passport => {
         profileURL: "https://graph.facebook.com/v3.0/me",
         authorizationURL: "https://www.facebook.com/v3.0/dialog/oauth",
         tokenURL: "https://graph.facebook.com/v3.0/oauth/access_token",
-        profileFields: ["email", "first_name", "last_name", "gender", "link"]
+        profileFields: ["email", "first_name", "last_name", "gender", "link"],
+        passReqToCallback: true
       },
-      (accessToken, refreshToken, profile, cb) => {
+      (req, accessToken, refreshToken, profile, cb) => {
         process.nextTick(() => {
-          User.findOne({ facebookId: profile.id }, (err, user) => {
-            if (err) {
-              return cb(err);
-            } else if (user) {
-              return cb(null, user);
-            } else {
-              let newUser = new User();
-              newUser.facebook.id = profile.id;
-              newUser.facebook.token = accessToken;
-              newUser.facebook.name = `${profile.name.givenName} ${
-                profile.name.familyName
-              }`;
-              newUser.facebook.email = profile.emails[0].value;
-              // console.log("here is user console log", newUser);
-              newUser.save(err => {
-                if (err) {
-                  throw err;
-                } else {
-                  return cb(null, newUser);
-                }
-              });
-            }
-          });
+          //user is not logged in yet
+          if (!req.user) {
+            User.findOne({ facebookId: profile.id }, (err, user) => {
+              if (err) {
+                return cb(err);
+              } else if (user) {
+                return cb(null, user);
+              } else {
+                let newUser = new User();
+                newUser.facebook.id = profile.id;
+                newUser.facebook.token = accessToken;
+                newUser.facebook.name = `${profile.name.givenName} ${
+                  profile.name.familyName
+                }`;
+                newUser.facebook.email = profile.emails[0].value;
+                newUser.save(err => {
+                  if (err) {
+                    throw err;
+                  } else {
+                    return cb(null, newUser);
+                  }
+                });
+              }
+            });
+          }
+          //user is already logged in
+          else {
+            let user = req.user;
+            user.facebook.id = profile.id;
+            user.facebook.token = accessToken;
+            user.facebook.name = `${profile.name.givenName} ${
+              profile.name.familyName
+            }`;
+            user.facebook.email = profile.emails[0].value;
+            user.save(err => {
+              if (err) {
+                throw err;
+              } else {
+                return cb(null, user);
+              }
+            });
+          }
         });
       }
     )
@@ -121,30 +153,49 @@ module.exports = passport => {
       {
         clientID: configAuth.googleAuth.clientId,
         clientSecret: configAuth.googleAuth.clientSecret,
-        callbackURL: configAuth.googleAuth.callbackUrl
+        callbackURL: configAuth.googleAuth.callbackUrl,
+        passReqToCallback: true
       },
-      (accessToken, refreshToken, profile, cb) => {
+      (req, accessToken, refreshToken, profile, cb) => {
         process.nextTick(() => {
-          User.findOne({ googleId: profile.id }, (err, user) => {
-            if (err) {
-              return cb(err);
-            } else if (user) {
-              return cb(null, user);
-            } else {
-              let newUser = new User();
-              newUser.google.id = profile.id;
-              newUser.google.token = accessToken;
-              newUser.google.name = profile.displayName;
-              newUser.google.email = profile.emails[0].value;
-              newUser.save(err => {
-                if (err) {
-                  throw err;
-                } else {
-                  return cb(null, newUser);
-                }
-              });
-            }
-          });
+          //user is not logged in yet
+          if (!req.user) {
+            User.findOne({ googleId: profile.id }, (err, user) => {
+              if (err) {
+                return cb(err);
+              } else if (user) {
+                return cb(null, user);
+              } else {
+                let newUser = new User();
+                newUser.google.id = profile.id;
+                newUser.google.token = accessToken;
+                newUser.google.name = profile.displayName;
+                newUser.google.email = profile.emails[0].value;
+                newUser.save(err => {
+                  if (err) {
+                    throw err;
+                  } else {
+                    return cb(null, newUser);
+                  }
+                });
+              }
+            });
+          }
+          //user is already logged in
+          else {
+            let user = req.user;
+            user.google.id = profile.id;
+            user.google.token = accessToken;
+            user.google.name = profile.displayName;
+            user.google.email = profile.emails[0].value;
+            user.save(err => {
+              if (err) {
+                throw err;
+              } else {
+                return cb(null, user);
+              }
+            });
+          }
         });
       }
     )

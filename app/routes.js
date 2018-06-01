@@ -61,6 +61,29 @@ module.exports = app => {
     })
   );
 
+  app.get(
+    "/connect/facebook",
+    passport.authorize("facebook", { scope: ["email"] })
+  );
+
+  app.get(
+    "/connect/google",
+    passport.authorize("google", { scope: ["profile", "email"] })
+  );
+
+  app.get("/connect/local", (req, res) => {
+    res.render("connect-local", { message: req.flash("error") });
+  });
+
+  app.post(
+    "/connect/local",
+    passport.authenticate("local-signup", {
+      successRedirect: "/profile",
+      failureRedirect: "/connect/local",
+      failureFlash: true
+    })
+  );
+
   app.get("/logout", (req, res) => {
     req.logout();
     res.redirect("/");

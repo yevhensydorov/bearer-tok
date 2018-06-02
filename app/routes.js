@@ -88,6 +88,47 @@ module.exports = app => {
     req.logout();
     res.redirect("/");
   });
+
+  app.get("/unlink/facebook", (req, res) => {
+    let user = req.user;
+    user.facebook.token = null;
+
+    user.save(err => {
+      if (err) {
+        throw err;
+      } else {
+        res.redirect("/profile");
+      }
+    });
+  });
+
+  app.get("/unlink/local", (req, res) => {
+    let user = req.user;
+
+    user.local.username = null;
+    user.local.password = null;
+
+    user.save(err => {
+      if (err) {
+        throw err;
+      } else {
+        res.redirect("/profile");
+      }
+    });
+  });
+
+  app.get("/unlink/google", (req, res) => {
+    let user = req.user;
+    user.google.token = null;
+
+    user.save(err => {
+      if (err) {
+        throw err;
+      } else {
+        res.redirect("/profile");
+      }
+    });
+  });
 };
 
 const isLoggedIn = (req, res, next) => {

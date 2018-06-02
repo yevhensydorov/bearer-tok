@@ -5,6 +5,7 @@ const SERVER_PORT = process.env.PORT || 3003;
 
 const cookieParser = require("cookie-parser");
 const session = require("express-session");
+const MongoStore = require("connect-mongo")(session);
 const morgan = require("morgan");
 const mongoose = require("mongoose");
 const bodyParser = require("body-parser");
@@ -25,6 +26,10 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(
   session({
     secret: "any random, string",
+    store: new MongoStore({
+      mongooseConnection: mongoose.connection,
+      ttl: 2 * 24 * 60 * 60
+    }),
     resave: false,
     saveUninitialized: false
   })

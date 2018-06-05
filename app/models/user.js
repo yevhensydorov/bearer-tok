@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const bcrypt = require("bcrypt");
+const Schema = mongoose.Schema;
 
 const userSchema = mongoose.Schema({
   local: {
@@ -17,6 +18,11 @@ const userSchema = mongoose.Schema({
     token: String,
     name: String,
     email: String
+  },
+  token: {
+    type: Schema.Type.ObjectID,
+    ref: "Token",
+    default: null
   }
 });
 

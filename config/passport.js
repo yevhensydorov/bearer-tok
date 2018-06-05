@@ -1,6 +1,7 @@
 const LocalStrategy = require("passport-local").Strategy;
 const FacebookStrategy = require("passport-facebook").Strategy;
 const GoogleStrategy = require("passport-google-oauth20").Strategy;
+const BearerStrategy = require("passport-http-bearer").Strategy;
 
 const User = require("../app/models/user");
 const configAuth = require("./auth");
@@ -199,5 +200,19 @@ module.exports = passport => {
         });
       }
     )
+  );
+
+  passport.use(
+    new BearerStrategy((token, done) => {
+      User.findOne({ _id: token }, (err, user) => {
+        if (err) {
+          return done(err);
+        }
+        if (!user) {
+          return done(null, false);
+        }
+        return done(null, user, { scope: "all" });
+      });
+    })
   );
 };

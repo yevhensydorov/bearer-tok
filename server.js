@@ -12,6 +12,7 @@ const bodyParser = require("body-parser");
 const passport = require("passport");
 const flash = require("connect-flash");
 const cors = require("cors");
+const router = require("./app/api");
 
 const configDB = require("./config/database.js");
 mongoose.connect(configDB.url);
@@ -40,6 +41,7 @@ app.use(passport.session());
 app.use(flash());
 
 app.set("view engine", "ejs");
+app.use("/api", router);
 
 require("./app/routes")(app, passport);
 
